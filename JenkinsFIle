@@ -26,8 +26,8 @@ spec:
     }
 
     environment {
-        REGISTRY = "178.170.116.15:32200"
-        IMAGE_NAME = "isaac-fansite"
+        REGISTRY = "178.170.116.15:32400"
+        IMAGE_NAME = "isaac/isaac-fansite"
         IMAGE_TAG = "${BUILD_NUMBER}"
     }
 

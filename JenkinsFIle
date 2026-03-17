@@ -1,0 +1,78 @@
+pipeline {
+    agent {
+        kubernetes {
+            label 'jenkins-agent'
+            yaml """
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+  - name: docker
+    image: docker:24-dind
+    securityContext:
+      privileged: true
+    volumeMounts:
+    - name: docker-sock
+      mountPath: /var/run/docker.sock
+  - name: kubectl
+    image: bitnami/kubectl:latest
+    command: ['sleep', '9999999']
+  volumes:
+  - name: docker-sock
+    hostPath:
+      path: /var/run/docker.sock
+"""
+        }
+    }
+
+    environment {
+        REGISTRY = "178.170.116.15:32200"
+        IMAGE_NAME = "isaac-fansite"
+        IMAGE_TAG = "${BUILD_NUMBER}"
+    }
+
+    stages {
+        stage('Build') {
+            steps {
+                container('docker') {
+                    sh """
+                        docker build -f .deploy/Dockerfile -t ${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} .
+                        docker tag ${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} ${REGISTRY}/${IMAGE_NAME}:latest
+                    """
+                }
+            }
+        }
+
+        stage('Push') {
+            steps {
+                container('docker') {
+                    sh """
+                        docker push ${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
+                        docker push ${REGISTRY}/${IMAGE_NAME}:latest
+                    """
+                }
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                container('kubectl') {
+                    sh """
+                        kubectl set image deployment/isaac-fansite \
+                            isaac-fansite=${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} \
+                            -n apps --record
+                        kubectl rollout status deployment/isaac-fansite -n apps
+                    """
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            container('docker') {
+                sh "docker rmi ${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} || true"
+            }
+        }
+    }
+}

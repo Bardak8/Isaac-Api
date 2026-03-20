@@ -78,8 +78,9 @@ func GetPage(title string) (*PageDetail, error) {
 	params.Set("action", "query")
 	params.Set("titles", title)
 	params.Set("prop", "extracts|pageimages")
-	params.Set("exintro", "true")
+	params.Set("exintro", "false")
 	params.Set("explaintext", "true")
+	params.Set("exchars", "1500")
 	params.Set("pithumbsize", "400")
 	params.Set("format", "json")
 

@@ -1,26 +1,30 @@
 pipeline {
     agent {
         kubernetes {
-            label 'jenkins-agent'
             yaml """
 apiVersion: v1
 kind: Pod
 spec:
+  serviceAccountName: jenkins-deploy
   containers:
-  - name: docker
-    image: docker:24-dind
-    securityContext:
-      privileged: true
+  - name: kaniko
+    image: gcr.io/kaniko-project/executor:debug
+    command: ['/busybox/cat']
+    tty: true
     volumeMounts:
-    - name: docker-sock
-      mountPath: /var/run/docker.sock
+    - name: harbor-credentials
+      mountPath: /kaniko/.docker
   - name: kubectl
     image: bitnami/kubectl:latest
-    command: ['sleep', '9999999']
+    command: ['sleep']
+    args: ['9999999']
   volumes:
-  - name: docker-sock
-    hostPath:
-      path: /var/run/docker.sock
+  - name: harbor-credentials
+    secret:
+      secretName: harbor-credentials
+      items:
+      - key: .dockerconfigjson
+        path: config.json
 """
         }
     }
@@ -32,23 +36,17 @@ spec:
     }
 
     stages {
-        stage('Build') {
+        stage('Build & Push') {
             steps {
-                container('docker') {
+                container('kaniko') {
                     sh """
-                        docker build -f .deploy/Dockerfile -t ${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} .
-                        docker tag ${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} ${REGISTRY}/${IMAGE_NAME}:latest
-                    """
-                }
-            }
-        }
-
-        stage('Push') {
-            steps {
-                container('docker') {
-                    sh """
-                        docker push ${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
-                        docker push ${REGISTRY}/${IMAGE_NAME}:latest
+                        /kaniko/executor \
+                          --dockerfile=.deploy/Dockerfile \
+                          --context=. \
+                          --destination=${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} \
+                          --destination=${REGISTRY}/${IMAGE_NAME}:latest \
+                          --insecure \
+                          --skip-tls-verify
                     """
                 }
             }
@@ -60,18 +58,10 @@ spec:
                     sh """
                         kubectl set image deployment/isaac-fansite \
                             isaac-fansite=${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} \
-                            -n apps --record
+                            -n apps
                         kubectl rollout status deployment/isaac-fansite -n apps
                     """
                 }
-            }
-        }
-    }
-
-    post {
-        always {
-            container('docker') {
-                sh "docker rmi ${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} || true"
             }
         }
     }

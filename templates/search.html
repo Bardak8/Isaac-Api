@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recherche - Isaac Wiki</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <nav>
+        <a href="/" class="logo">☠ Isaac Wiki</a>
+        <div class="nav-links">
+            <a href="/search">Rechercher</a>
+            <a href="/favorites">Favoris</a>
+        </div>
+    </nav>
+    <main>
+        <div class="page-header">
+            <h1>Recherche</h1>
+            <form action="/search" method="GET" class="search-form">
+                <input type="text" name="q" value="{{.query}}" placeholder="Rechercher...">
+                <button type="submit">Rechercher</button>
+            </form>
+        </div>
+        {{if .error}}
+            <div class="error">{{.error}}</div>
+        {{end}}
+        {{if .results}}
+            <p class="result-count">{{len .results}} résultats pour "{{.query}}"</p>
+            <div class="results-grid">
+                {{range .results}}
+                <a href="/detail/{{.Title}}" class="result-card">
+                    <h3>{{.Title}}</h3>
+                    <p>{{.Snippet}}</p>
+                </a>
+                {{end}}
+            </div>
+        {{else if .query}}
+            <div class="empty">Aucun résultat pour "{{.query}}"</div>
+        {{end}}
+    </main>
+    <footer>
+        <p>Fan site non officiel — données issues du <a href="https://bindingofisaacrebirth.fandom.com" target="_blank">wiki officiel</a></p>
+    </footer>
+</body>
+</html>

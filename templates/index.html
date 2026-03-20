@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Isaac Wiki Fan Site</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <nav>
+        <a href="/" class="logo">☠ Isaac Wiki</a>
+        <div class="nav-links">
+            <a href="/search">Rechercher</a>
+            <a href="/favorites">Favoris</a>
+        </div>
+    </nav>
+    <main>
+        <div class="hero">
+            <h1>☠ The Binding of Isaac</h1>
+            <p class="subtitle">Explore items, personnages et secrets</p>
+            <form action="/search" method="GET" class="search-form">
+                <input type="text" name="q" placeholder="Rechercher un item, personnage..." autofocus>
+                <button type="submit">Rechercher</button>
+            </form>
+            <div class="suggestions">
+                <span>Suggestions :</span>
+                <a href="/search?q=Brimstone">Brimstone</a>
+                <a href="/search?q=Isaac">Isaac</a>
+                <a href="/search?q=Magdalene">Magdalene</a>
+                <a href="/search?q=Monstro">Monstro</a>
+            </div>
+        </div>
+    </main>
+    <footer>
+        <p>Fan site non officiel — données issues du <a href="https://bindingofisaacrebirth.fandom.com" target="_blank">wiki officiel</a></p>
+    </footer>
+</body>
+</html>
+ 

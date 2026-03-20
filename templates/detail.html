@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{if .page}}{{.page.Title}} - {{end}}Isaac Wiki</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <nav>
+        <a href="/" class="logo">☠ Isaac Wiki</a>
+        <div class="nav-links">
+            <a href="/search">Rechercher</a>
+            <a href="/favorites">Favoris</a>
+        </div>
+    </nav>
+    <main>
+        {{if .error}}
+            <div class="error">{{.error}}</div>
+        {{else}}
+        <div class="detail-page">
+            <div class="detail-header">
+                {{if .page.Thumbnail}}
+                <img src="{{.page.Thumbnail}}" alt="{{.page.Title}}" class="detail-thumb">
+                {{end}}
+                <div class="detail-info">
+                    <h1>{{.page.Title}}</h1>
+                    <div class="detail-actions">
+                        {{if .isFav}}
+                        <form action="/favorites/remove" method="POST">
+                            <input type="hidden" name="title" value="{{.page.Title}}">
+                            <button type="submit" class="btn btn-danger">★ Retirer des favoris</button>
+                        </form>
+                        {{else}}
+                        <form action="/favorites/add" method="POST">
+                            <input type="hidden" name="title" value="{{.page.Title}}">
+                            <input type="hidden" name="thumbnail" value="{{.page.Thumbnail}}">
+                            <button type="submit" class="btn btn-primary">☆ Ajouter aux favoris</button>
+                        </form>
+                        {{end}}
+                        <a href="https://bindingofisaacrebirth.fandom.com/wiki/{{.page.Title}}" target="_blank" class="btn btn-secondary">
+                            Voir sur le wiki officiel
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="detail-extract">
+                {{if .page.Extract}}
+                    {{.page.Extract}}
+                {{else}}
+                    <p>Aucune description disponible.</p>
+                {{end}}
+            </div>
+        </div>
+        {{end}}
+    </main>
+    <footer>
+        <p>Fan site non officiel — données issues du <a href="https://bindingofisaacrebirth.fandom.com" target="_blank">wiki officiel</a></p>
+    </footer>
+</body>
+</html>

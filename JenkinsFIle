@@ -29,6 +29,19 @@ spec:
         }
     }
 
+    parameters {
+        choice(
+            name: 'ACTION',
+            choices: ['build-only', 'build-and-deploy', 'deploy-only'],
+            description: 'Action a effectuer'
+        )
+        string(
+            name: 'IMAGE_TAG_DEPLOY',
+            defaultValue: 'latest',
+            description: 'Tag image a deployer (utilise uniquement pour deploy-only)'
+        )
+    }
+
     environment {
         REGISTRY = "178.170.116.15:32400"
         IMAGE_NAME = "isaac/isaac-fansite"
@@ -37,6 +50,9 @@ spec:
 
     stages {
         stage('Build & Push') {
+            when {
+                expression { params.ACTION in ['build-and-deploy', 'build-only'] }
+            }
             steps {
                 container('kaniko') {
                     sh """
@@ -53,16 +69,31 @@ spec:
         }
 
         stage('Deploy') {
+            when {
+                expression { params.ACTION in ['build-and-deploy', 'deploy-only'] }
+            }
             steps {
                 container('kubectl') {
-                    sh """
-                        kubectl set image deployment/isaac-fansite \
-                            isaac-fansite=${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} \
-                            -n apps
-                        kubectl rollout status deployment/isaac-fansite -n apps
-                    """
+                    script {
+                        def tag = params.ACTION == 'deploy-only' ? params.IMAGE_TAG_DEPLOY : env.IMAGE_TAG
+                        sh """
+                            kubectl set image deployment/isaac-fansite \
+                                isaac-fansite=${REGISTRY}/${IMAGE_NAME}:${tag} \
+                                -n apps
+                            kubectl rollout status deployment/isaac-fansite -n apps
+                        """
+                    }
                 }
             }
+        }
+    }
+
+    post {
+        success {
+            echo "Pipeline termine avec succes - Action: ${params.ACTION}"
+        }
+        failure {
+            echo "Pipeline en echec - Action: ${params.ACTION}"
         }
     }
 }

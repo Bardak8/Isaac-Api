@@ -13,5 +13,4 @@ COPY --from=builder /app/isaac-fansite .
 COPY --from=builder /app/templates ./templates
 COPY --from=builder /app/static ./static
 
-EXPOSE 8080
 CMD ["./isaac-fansite"]

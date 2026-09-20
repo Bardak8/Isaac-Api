@@ -5,23 +5,23 @@ pipeline {
 apiVersion: v1
 kind: Pod
 spec:
-  serviceAccountName: jenkins-deploy
+  serviceAccountName: jenkins
   containers:
   - name: kaniko
     image: gcr.io/kaniko-project/executor:debug
     command: ['/busybox/cat']
     tty: true
     volumeMounts:
-    - name: harbor-credentials
+    - name: registry-credentials
       mountPath: /kaniko/.docker
   - name: kubectl
     image: alpine/k8s:1.29.2
     command: ['sleep']
     args: ['9999999']
   volumes:
-  - name: harbor-credentials
+  - name: registry-credentials
     secret:
-      secretName: harbor-credentials
+      secretName: scw-registry-credentials
       items:
       - key: .dockerconfigjson
         path: config.json
@@ -32,8 +32,8 @@ spec:
     parameters {
         choice(
             name: 'ACTION',
-            choices: ['build-only', 'build-and-deploy', 'deploy-only'],
-            description: 'Action a effectuer'
+            choices: ['build-and-deploy', 'build-only', 'deploy-only'],
+            description: 'Action a effectuer (build-and-deploy = choix par defaut, utilise par le webhook de release)'
         )
         string(
             name: 'IMAGE_TAG_DEPLOY',
@@ -43,9 +43,9 @@ spec:
     }
 
     environment {
-        REGISTRY = "178.170.116.15:32400"
-        IMAGE_NAME = "isaac/isaac-fansite"
-        IMAGE_TAG = "${BUILD_NUMBER}"
+        REGISTRY   = "rg.fr-par.scw.cloud/jenkins-poc-apps"
+        IMAGE_NAME = "isaac-fansite"
+        IMAGE_TAG  = "${env.RELEASE_TAG ?: env.BUILD_NUMBER}"
     }
 
     stages {
@@ -60,9 +60,7 @@ spec:
                           --dockerfile=.deploy/Dockerfile \
                           --context=. \
                           --destination=${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} \
-                          --destination=${REGISTRY}/${IMAGE_NAME}:latest \
-                          --insecure \
-                          --skip-tls-verify
+                          --destination=${REGISTRY}/${IMAGE_NAME}:latest
                     """
                 }
             }

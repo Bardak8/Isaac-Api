@@ -51,7 +51,7 @@ spec:
     stages {
         stage('Build & Push') {
             when {
-                expression { params.ACTION in ['build-and-deploy', 'build-only'] }
+                expression { (params.ACTION ?: 'build-and-deploy') in ['build-and-deploy', 'build-only'] }
             }
             steps {
                 container('kaniko') {
@@ -68,7 +68,7 @@ spec:
 
         stage('Deploy') {
             when {
-                expression { params.ACTION in ['build-and-deploy', 'deploy-only'] }
+                expression { (params.ACTION ?: 'build-and-deploy') in ['build-and-deploy', 'deploy-only'] }
             }
             steps {
                 container('kubectl') {
